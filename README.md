@@ -1,3 +1,9 @@
+/game_iso/copy_game.sh to copy your legally owned copy of the game into this repo for decomp (Remove all spacing in filename and keep it simple)
+
+./tools/extract-game.sh game_iso/Your_Crackdown_ISOs_Filename.iso extracted_game
+
+./tools/reset-game-staging.sh to reset end-to-end
+
 <div align="center">
 
 # Crackdown - PC Port
