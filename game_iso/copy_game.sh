@@ -4,6 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 ENV_FILE="$SCRIPT_DIR/.env"
 
+# Check if .env file exists
 if [[ ! -f "$ENV_FILE" ]]; then
     echo "Missing $ENV_FILE. Create it from .env.example and set CRACKDOWN_GAME to your ISO path." >&2
     exit 1
@@ -13,16 +14,17 @@ fi
 # shellcheck disable=SC1090
 source "$ENV_FILE"
 
+# Check if .env variable is populated
 if [[ -z "${CRACKDOWN_GAME:-}" ]]; then
     echo "CRACKDOWN_GAME is empty in $ENV_FILE." >&2
     exit 1
 fi
-
+# Check if files exist at its location
 if [[ ! -f "$CRACKDOWN_GAME" ]]; then
     echo "Game ISO not found: $CRACKDOWN_GAME" >&2
     exit 1
 fi
-
+# Check if files is of the .iso persuasion
 if [[ "${CRACKDOWN_GAME,,}" != *.iso ]]; then
     echo "CRACKDOWN_GAME must point to an ISO file: $CRACKDOWN_GAME" >&2
     exit 1
@@ -31,6 +33,7 @@ fi
 source_path="$(realpath -- "$CRACKDOWN_GAME")"
 destination="$SCRIPT_DIR/$(basename -- "$CRACKDOWN_GAME")"
 
+# Check if .iso has already been copied here
 if [[ "$source_path" == "$destination" ]]; then
     echo "The ISO is already in $SCRIPT_DIR; nothing to copy." >&2
     exit 1
