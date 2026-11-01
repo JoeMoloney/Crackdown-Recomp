@@ -191,7 +191,10 @@ def collect(source):
         raise ManifestError(
             f"{xex[0]} has SHA-256 {digest.hexdigest().upper()}, not the supported {SUPPORTED_XEX_SHA256}"
         )
-    return required, dict(required)[xex[0]], digest.digest()
+    # XDVDFS preserves the disc's filename case, while the installer canonicalizes the executable to
+    # XEX_NAME. Emit the same manifest for `default.xex` and `Default.xex` sources.
+    required = sorted((XEX_NAME if path == xex[0] else path, size) for path, size in required)
+    return required, dict(required)[XEX_NAME], digest.digest()
 
 
 def render(required, xex_size, xex_digest):
