@@ -1,3 +1,7 @@
 [submodule "third_party/trg-launcher"]
 	path = third_party/trg-launcher
 	url = https://github.com/TekRantGaming/trg-launcher.git
+[submodule "third_party/rexglue-sdk"]
+	path = third_party/rexglue-sdk
+	url = https://gitlab.com/JoeMoloney/rexglue-sdk.git
+	branch = crackdown
