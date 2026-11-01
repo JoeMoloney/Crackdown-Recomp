@@ -1,10 +1,14 @@
 I've modified this for use on CachyOS Wayland
 
-/game_iso/copy_game.sh to copy your legally owned copy of the game into this repo for decomp (Remove all spacing in filename and keep it simple)
+[Copy your legally owned copy of the game into this repo for decomp (Remove all spacing in filename and keep it simple) (game_iso/copy_game.sh)](game_iso/copy_game.sh)
 
-./tools/extract-game.sh game_iso/Your_Crackdown_ISOs_Filename.iso extracted_game
+[Extract the iso (tools/extract-game.sh)](tools/extract-game.sh)
 
-./tools/reset-game-staging.sh to reset end-to-end
+[Create the games manifest using: python3 -I tools/make-game-manifest.py extracted_game](tools/make-game-manifest.py)
+
+[Validate the games manifest using: python3 -I tools/make-game-manifest.py --verify extracted_game](tools/make-game-manifest.py)
+
+[Reset end-to-end (tools/reset-game-staging.sh)](tools/reset-game-staging.sh)
 
 # Original README:
 
