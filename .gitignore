@@ -5,6 +5,7 @@
 /build-release/
 /dist/
 /out/
+/game_iso/.env
 
 # Downloaded ReXGlue SDK
 /tools/rexglue/
