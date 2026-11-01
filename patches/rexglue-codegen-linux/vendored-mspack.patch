@@ -1,0 +1,21 @@
+diff --git a/thirdparty/CMakeLists.txt b/thirdparty/CMakeLists.txt
+--- a/thirdparty/CMakeLists.txt
++++ b/thirdparty/CMakeLists.txt
+@@ -32,7 +32,6 @@ endif()
+ #=============================================================================
+ set(REQUIRED_SUBMODULES
+     cli11
+-    libmspack
+     FFmpeg
+     tomlplusplus
+     simde
+@@ -73,4 +72,9 @@ foreach(submodule ${REQUIRED_SUBMODULES})
+     endif()
+ endforeach()
+ 
++# This fork vendors libmspack as ordinary source files, not a git submodule.
++if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/libmspack/cabextract/mspack/lzxd.c")
++    message(FATAL_ERROR "Vendored libmspack sources are missing")
++endif()
++
+ #=============================================================================

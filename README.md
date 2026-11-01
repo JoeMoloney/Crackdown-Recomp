@@ -1,12 +1,15 @@
-I've modified this for use on CachyOS Wayland
+I've modified this for use on CachyOS w/Wayland compositor
 
-[Copy your legally owned copy of the game into this repo for decomp (Remove all spacing in filename and keep it simple) (game_iso/copy_game.sh)](game_iso/copy_game.sh)
+Set CRACKDOWN_GAME in game_iso/.env to your legally owned ISO path
+[Copy your legally owned copy of the game into this repo for decomp (Change iso name to something simple E.g. Crackdown.iso) (game_iso/copy_game.sh)](game_iso/copy_game.sh)
 
-[Extract the iso (tools/extract-game.sh)](tools/extract-game.sh)
+[Extract the iso (tools/extract-game.sh game_iso/Crackdown.iso extracted_game)](tools/extract-game.sh)
 
 [Create the games manifest using: python3 -I tools/make-game-manifest.py extracted_game](tools/make-game-manifest.py)
 
 [Validate the games manifest using: python3 -I tools/make-game-manifest.py --verify extracted_game](tools/make-game-manifest.py)
+
+[Generate Crackdown C++ code for Linux](tools/codegen-linux.sh)
 
 [Reset end-to-end (tools/reset-game-staging.sh)](tools/reset-game-staging.sh)
 

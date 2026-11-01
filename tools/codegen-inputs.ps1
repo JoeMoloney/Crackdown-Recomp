@@ -78,7 +78,9 @@ function Get-CodegenInputItems([string]$Root, [string]$Build = 'default') {
 # The patches in patches\rexglue-sdk that change the codegen tool, in ordinal name order.
 function Get-CodegenPatches([string]$Root) {
     return @(Get-PlatformPatches (Join-Path $Root 'patches\rexglue-sdk') 'windows' |
-        Where-Object { Select-String -LiteralPath $_.Path -Pattern '^diff --git a/src/codegen/' -Quiet })
+        Where-Object {
+            Select-String -LiteralPath $_.Path -Pattern '^diff --git a/src/codegen/|^diff --git a/resources/templates/codegen/' -Quiet
+        })
 }
 
 # 'stock', or a name for the codegen tool built from the codegen patches.

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Checks that generated/default was written by tools/codegen.ps1 from the files in this tree: the codegen record
+# Checks that generated/default was written by a codegen tool from the files in this tree: the codegen record
 # generated/codegen-inputs.stamp must match the manifest, the XEX, the manifest's includes and the codegen patches.
 # With `tu6` it checks generated/tu6 from tools/codegen-tu6.ps1 instead: its record also names the update's patch.
-# Codegen itself only runs on Windows. Exit status: 0 current, 2 stale or unverifiable.
+# Exit status: 0 current, 2 stale or unverifiable.
 #
 #   tools/check-guest-code.sh [ROOT [tu6]]
 set -euo pipefail
@@ -24,11 +24,13 @@ sha_upper() { sha256sum "$1" | cut -d' ' -f1 | tr 'a-f' 'A-F'; }
 [ -f "$ROOT/$OUTPUT/sources.cmake" ] || stale "$OUTPUT is missing"
 [ -f "$STAMP" ] || stale "no successful codegen record"
 
-# The codegen tool: stock, or built from the patches that touch src/codegen (the Windows patch set).
+# The codegen tool: stock, or built from the patches that touch codegen sources or emitted templates.
 codegen_patches=()
 for patch in $(ls "$PATCH_DIR"/*.patch | LC_ALL=C sort); do
   case "$patch" in *.linux.patch) continue ;; esac
-  grep -q '^diff --git a/src/codegen/' "$patch" && codegen_patches+=("$patch")
+  if grep -Eq '^diff --git a/(src/codegen|resources/templates/codegen)/' "$patch"; then
+    codegen_patches+=("$patch")
+  fi
 done
 tool=stock
 if [ "${#codegen_patches[@]}" -gt 0 ]; then
@@ -42,7 +44,18 @@ fi
 sdk_version="$(sed -n 's/^SDK_VERSION=//p' "$PATCH_DIR/baseline.env" | tr -d '\r')"
 expected_first="rexglue  $sdk_version"
 [ "$tool" = stock ] || expected_first+=" $tool"
-[ "$(head -n 1 "$STAMP" | tr -d '\r')" = "$expected_first" ] || stale "the codegen tool or the SDK version changed"
+actual_first="$(head -n 1 "$STAMP" | tr -d '\r')"
+if [ "$actual_first" != "$expected_first" ]; then
+  # Linux source builds record the exact ReXGlue submodule commit after the tool identity.
+  if [[ "$actual_first" == "$expected_first source-"* ]]; then
+    sdk_source="$ROOT/third_party/rexglue-sdk"
+    [ -e "$sdk_source/.git" ] || stale "the ReXGlue source submodule is not initialized"
+    expected_source="$(git -C "$sdk_source" rev-parse HEAD)"
+    [ "$actual_first" = "$expected_first source-$expected_source" ] || stale "the ReXGlue source or codegen tool changed"
+  else
+    stale "the codegen tool or the SDK version changed"
+  fi
+fi
 
 # The recorded inputs: the manifest, the XEX, then the manifest's includes, each at the recorded hash.
 includes="$(sed -n 's/^[[:space:]]*includes[[:space:]]*=[[:space:]]*\[\(.*\)\].*/\1/p' "$ROOT/$MANIFEST" |
