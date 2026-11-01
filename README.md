@@ -1,5 +1,7 @@
 I've modified this for use on CachyOS w/Wayland compositor
 
+# For Linux Building
+
 Set CRACKDOWN_GAME in game_iso/.env to your legally owned ISO path
 [Copy your legally owned copy of the game into this repo for decomp (Change iso name to something simple E.g. Crackdown.iso) (game_iso/copy_game.sh)](game_iso/copy_game.sh)
 
@@ -10,6 +12,38 @@ Set CRACKDOWN_GAME in game_iso/.env to your legally owned ISO path
 [Validate the games manifest using: python3 -I tools/make-game-manifest.py --verify extracted_game](tools/make-game-manifest.py)
 
 [Generate Crackdown C++ code for Linux](tools/codegen-linux.sh)
+
+[Set up linux-amd64 SDK](tools/setup-linux-sdk.sh)
+
+Ensure you have clang-20 installed
+sudo pacman -S clang20 lld20 llvm20
+Then check that the compiler and linker are available:
+`clang-20 --version`
+`clang++-20 --version`
+`ld.lld-20 --version`
+
+If not, then create user-local aliases:
+`mkdir -p ~/.local/bin`
+`ln -s /usr/lib/llvm20/bin/clang-20 ~/.local/bin/clang-20`
+`ln -s /usr/lib/llvm20/bin/clang++ ~/.local/bin/clang++-20`
+`ln -s /usr/lib/llvm20/bin/ld.lld ~/.local/bin/ld.lld-20`
+
+Make sure ~/.local/bin is on your PATH in zsh:
+`echo $PATH`
+
+If it isn’t listed, add this to ~/.zshrc:
+`export PATH="$HOME/.local/bin:$PATH"`
+
+Then reload and verify:
+`source ~/.zshrc`
+`clang-20 --version`
+`clang++-20 --version`
+`ld.lld-20 --version`
+[Bootstraps rexglue/linux-amd64 automatically, then builds the game. Use: .tools/build.sh release](tools/build.sh)
+If you still get clang-20 not found when trying to run build.sh release
+Run it with: `PATH="/usr/lib/llvm20/bin:$HOME/.local/bin:$PATH" ./tools/build.sh release`
+You can also add this line to ~/.zshrc for future runs: `export PATH="/usr/lib/llvm20/bin:$HOME/.local/bin:$PATH"`
+Then run source ~/.zshrc and check `command -v clang-20 clang++-20 ld.lld-20`
 
 [Reset end-to-end (tools/reset-game-staging.sh)](tools/reset-game-staging.sh)
 
