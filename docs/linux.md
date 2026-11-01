@@ -154,7 +154,8 @@ A build prints, and saves next to the runtime as `<runtime>.manifest`, what prod
 their licenses are listed in `THIRD-PARTY-LICENSES-LINUX.txt` inside the AppImage. The runtime is rebuilt only when the
 pins or the patch change.
 
-For a plain build without packaging, with the SDK extracted into `tools/rexglue/linux-amd64`, `tools/build.sh`
-(`release`, `relwithdebinfo` or `debug`) builds the patched ReXGlue libraries when they are missing or out of date and then
-the `linux-amd64-<config>` preset into `out/build/<preset>`. `tools/test.sh` builds and runs the tests that need no game
-files.
+For a plain build, first generate the base guest with `tools/codegen-linux.sh`. `tools/setup-linux-sdk.sh` downloads and
+SHA-256 verifies the pinned ReXGlue Linux SDK into `tools/rexglue/linux-amd64`; `tools/build.sh` also runs this setup
+automatically if needed. Then `tools/build.sh` (`release`, `relwithdebinfo` or `debug`) builds the patched ReXGlue libraries
+when they are missing or out of date and builds the `linux-amd64-<config>` preset into `out/build/<preset>`.
+`tools/test.sh` builds and runs the tests that need no game files.

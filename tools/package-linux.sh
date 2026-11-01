@@ -15,8 +15,8 @@
 # The AppImage runtime (the part that mounts the AppImage before AppRun runs) is built from the pinned AppImage/type2-runtime
 # source with the project's patch (tools/build-appimage-runtime.sh): that needs root or sudo, network access the first time,
 # and is skipped while the pins and patches are unchanged.
-# Needs generated/default from tools/codegen.ps1 and generated/tu6 from tools/codegen-tu6.ps1 (both Windows) and the
-# game's Default.xex at game/assets, which only the guest-code freshness check reads (tools/check-guest-code.sh); none
+# Needs generated/default from tools/codegen-linux.sh and generated/tu6 from tools/codegen-tu6.ps1 (currently Windows),
+# and the game's Default.xex at game/assets, which only the guest-code freshness check reads; none
 # of them is packaged. The AppImage holds one executable, crackdown, which carries both recompiled guests.
 set -euo pipefail
 
@@ -29,7 +29,6 @@ MAX_GLIBC=2.31
 BASELINE="$ROOT/patches/rexglue-sdk/baseline.env"
 baseline() { sed -n "s|^$1=||p" "$BASELINE" | tr -d '\r'; }
 SDK_VERSION="$(baseline SDK_VERSION)"
-SDK_SHA256="$(baseline SDK_LINUX_ZIP_SHA256 | tr 'A-F' 'a-f')"
 APPIMAGETOOL_VERSION=1.9.1
 APPIMAGETOOL_SHA256=ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0
 
@@ -101,20 +100,7 @@ done
 
 echo "== ReXGlue SDK $SDK_VERSION (linux-amd64)"
 SDK="$WORK/tools/rexglue/linux-amd64"
-if [ ! -f "$SDK/lib/cmake/rexglue/rexglueConfigVersion.cmake" ]; then
-  mkdir -p "$WORK/tools/rexglue"
-  ZIP="$WORK/tools/rexglue/rexglue-sdk-$SDK_VERSION-linux-amd64.zip"
-  download "https://github.com/rexglue/rexglue-sdk/releases/download/v$SDK_VERSION/rexglue-sdk-$SDK_VERSION-linux-amd64.zip" \
-    "$ZIP" "$SDK_SHA256"
-  rm -rf "$SDK"
-  if command -v unzip >/dev/null; then
-    unzip -q -o "$ZIP" -d "$WORK/tools/rexglue"
-  else
-    python3 -I -c 'import sys, zipfile; zipfile.ZipFile(sys.argv[1]).extractall(sys.argv[2])' "$ZIP" "$WORK/tools/rexglue"
-  fi
-fi
-grep -qF "set(PACKAGE_VERSION \"$SDK_VERSION\")" "$SDK/lib/cmake/rexglue/rexglueConfigVersion.cmake" ||
-  fail "tools/rexglue/linux-amd64 is not ReXGlue $SDK_VERSION"
+bash "$ROOT/tools/setup-linux-sdk.sh" "$(dirname "$SDK")"
 
 echo "== Patched ReXGlue runtime and GPU plugin"
 PATCHED="$ROOT/tools/build-patched-rexruntime.sh"
