@@ -7,6 +7,11 @@ gpu_plugin = "xenos"
 readback_resolve = "fast"
 # Copy back only resolves up to 256 KB; the large ones are not read on the CPU and cost frame rate.
 readback_resolve_max_bytes = 262144
+# Vulkan: hand recorded GPU work to a separate submit thread so the GPU command thread can go on (Fable 2 port).
+vulkan_async_submit = true
+# Don't re-upload shader constants when the game rewrites the same values (Fable 2 port). Both together:
+# 34.8 -> 36.2 FPS median, slow frames (p10) 31.4 -> 35.1 at the heavy test scene.
+gpu_skip_unchanged_constant_writes = true
 log_max_file_size_mb = 30
 log_max_files = 2
 

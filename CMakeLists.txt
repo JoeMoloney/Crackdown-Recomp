@@ -417,13 +417,16 @@ if(WIN32)
     set_target_properties(trg-updater PROPERTIES OUTPUT_NAME "trg-updater")
 endif()
 
-# The runtime reads its cvars from <exe dir>/crackdown.toml.
-add_custom_command(TARGET crackdown POST_BUILD
+# The runtime reads its cvars from <exe dir>/crackdown.toml. A separate target (not POST_BUILD) so editing only the
+# config still updates the staged copy without relinking the game.
+add_custom_target(crackdown-config ALL
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         "${CMAKE_CURRENT_SOURCE_DIR}/config/crackdown.toml"
         "$<TARGET_FILE_DIR:crackdown>"
+    DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/config/crackdown.toml"
     VERBATIM
 )
+add_dependencies(crackdown-config crackdown)
 
 # The button glyph sheet the font overlay reads from <exe dir>/glyphs (src/glyph_overlay.cpp).
 add_custom_command(TARGET crackdown POST_BUILD

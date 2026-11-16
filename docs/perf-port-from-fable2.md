@@ -47,7 +47,7 @@ Measure with the in-game guest FPS where available, plus MangoHud median/p10 (se
 | 4 | + E | 1 | ✅ 2026-11-16: 36.2 / 35.1, stable. Keep both |
 | 5 | spare / follow-up on whatever the C+E profile shows | 1 | ⏳ |
 | 6 | (dropped: D not needed) | — | — |
-| 7 | All kept fixes on, normal longer play: hitches, audio, visuals. Seed winning cvars as defaults. | 1 | ⏳ |
+| 7 | All kept fixes on, normal longer play: hitches, audio, visuals. Seed winning cvars as defaults. | 1 | 🔶 2026-11-16: both set in `config/crackdown.toml` (unit 5 skipped); play session pending. Also fixed: editing only the config never reached the staged build (now its own CMake target) |
 | — | Spare boots for crashes / unclear results | 1–2 | |
 
 ## Unit 0 notes (2026-11-15)
@@ -182,9 +182,8 @@ unclear, a flags-off boot re-measures the baseline.
 ## Next session prompt
 
 ```
-Crackdown perf port: read docs/perf-port-from-fable2.md ("Results" and the session queue). C and E are kept (36 FPS,
-much smoother). Decide whether unit 5 (follow-up on the C+E profile, out/perf-capture/20261116-103713/) is worth a
-boot or go straight to unit 7: make vulkan_async_submit and gpu_skip_unchanged_constant_writes default on (config or
-cvar defaults), rebuild, test, then I do one longer normal play session checking hitches, audio and visuals. Don't
-commit without asking. Explain simply (I'm a Java dev). At the end, update the status table and this prompt.
+Crackdown perf port: read docs/perf-port-from-fable2.md (status table, unit 7). vulkan_async_submit and
+gpu_skip_unchanged_constant_writes are now on in config/crackdown.toml. I've done a longer normal play session on the
+current build; here's what I saw: <notes>. Record it, tick unit 7, and if anything regressed, find out which of the
+two flags causes it (launch with --<flag>=false). Don't commit without asking. Explain simply (I'm a Java dev).
 ```
