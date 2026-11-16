@@ -35,8 +35,8 @@ for tool in git cmake ninja python3 sha256sum "$CC" "$CXX"; do
 done
 [[ -e "$SDK/.git" ]] || fail "ReXGlue submodule missing; run: git submodule update --init third_party/rexglue-sdk"
 
-SDK_PIN="$(git -C "$ROOT" ls-tree HEAD third_party/rexglue-sdk | awk '{print $3}')"
-[[ -n "$SDK_PIN" ]] || fail "third_party/rexglue-sdk is not recorded in HEAD; commit the submodule reference first"
+SDK_PIN="$(sed -n 's/^SDK_COMMIT=//p' "$PATCH_DIR/baseline.env" | tr -d '\r')"
+[[ "$SDK_PIN" =~ ^[0-9a-f]{40}$ ]] || fail "baseline.env has no valid ReXGlue SDK_COMMIT"
 SDK_HEAD="$(git -C "$SDK" rev-parse HEAD)"
 [[ "$SDK_HEAD" == "$SDK_PIN" ]] || fail "ReXGlue checkout ($SDK_HEAD) differs from the repo's pinned commit ($SDK_PIN)"
 
@@ -70,14 +70,21 @@ else
     git -C "$SDK" worktree add --detach "$SDK_SOURCE" "$SDK_PIN"
 fi
 
-# Initialize only the SDK dependencies used by its Linux build. libmspack is vendored in this fork, not a submodule.
+# Initialize only the SDK dependencies used by its Linux build. Himdo's source has libmspack as a git submodule;
+# the old v0.10.0 fork vendored it as ordinary source files and needs the compatibility patch instead.
 SDK_DEPS=(cli11 FFmpeg tomlplusplus simde xxHash spdlog fmt utfcpp imgui sdl3
           vulkan-headers vulkan-memory-allocator spirv-headers spirv-tools glslang o1heap inja)
+MSPACK_IS_SUBMODULE=0
+if git -C "$SDK_SOURCE" config -f .gitmodules --get submodule.thirdparty/libmspack.path >/dev/null 2>&1; then
+    MSPACK_IS_SUBMODULE=1
+    SDK_DEPS+=(libmspack)
+fi
 SDK_DEP_PATHS=()
 for dep in "${SDK_DEPS[@]}"; do SDK_DEP_PATHS+=("thirdparty/$dep"); done
 git -C "$SDK_SOURCE" submodule update --init --jobs "$JOBS" -- "${SDK_DEP_PATHS[@]}"
 
-if ! grep -qF 'This fork vendors libmspack as ordinary source files' "$SDK_SOURCE/thirdparty/CMakeLists.txt"; then
+if [[ $MSPACK_IS_SUBMODULE == 0 ]] &&
+   ! grep -qF 'This fork vendors libmspack as ordinary source files' "$SDK_SOURCE/thirdparty/CMakeLists.txt"; then
     git -C "$SDK_SOURCE" apply --check "$MSPACK_PATCH" || fail "vendored-libmspack compatibility patch does not apply"
     git -C "$SDK_SOURCE" apply "$MSPACK_PATCH"
 fi
@@ -90,6 +97,9 @@ for patch in "$PATCH_DIR"/*.patch; do
         codegen_patches+=("$patch")
     fi
 done
+if [[ "$(sed -n 's/^SDK_COMMIT=//p' "$PATCH_DIR/baseline.env" | tr -d '\r')" == c04750fe2a0add5fef8d98eb4aba06a7683a2612 ]]; then
+    codegen_patches=("$PATCH_DIR/1105-himdo-port.patch")
+fi
 [[ ${#codegen_patches[@]} -gt 0 ]] || fail "no ReXGlue codegen patches found"
 VECTOR_BUILDER="$SDK_SOURCE/src/codegen/builders/vector.cpp"
 PCH_TEMPLATE="$SDK_SOURCE/resources/templates/codegen/pch_h.inja"

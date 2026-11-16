@@ -2,10 +2,12 @@
 
 The Linux build is a native x86_64 program, not a Windows build under Proton or Wine. It uses the same code and the same
 launcher as the Windows build: ReXGlue SDK 0.10.0's Linux runtime and the Xenos GPU plugin's Vulkan backend, both built
-with the project's patches. It ships as one AppImage, which is also the Steam Deck build.
+with the project's patches. The intended distribution is one AppImage, including for Steam Deck; the current Deck test
+is a separate experimental container-launched candidate, not that AppImage.
 
 **Experimental.** The AppImage is built and checked by the project's scripts and the automated tests pass on Linux, but
-this release has not yet been fully validated on real Linux PCs or Steam Deck hardware. Reports are welcome.
+it has not yet been validated on real hardware. An isolated #550 candidate has had an initial positive report on a Steam
+Deck; see below and the performance investigation notes. Reports are welcome.
 
 Every setting of the launcher works on Linux, apart from **Graphics card**: that list selects a Direct3D 12 adapter, so it
 exists on Windows only. On Linux the runtime prefers the dedicated GPU, and the usual selection variables (`DRI_PRIME`,
@@ -34,7 +36,15 @@ is older than GCC 13.
 
 ### Steam Deck
 
-This is the intended flow. It has not been tried on a Steam Deck itself.
+The standard AppImage flow below remains unverified on Deck hardware. A separate experimental **#550-only** test
+installation was first launched on a Steam Deck on 2026-11-01 using the already-pinned Fable II Arch container for
+userspace compatibility, with the Deck's RADV and XWayland passed through. It lives at
+`/home/deck/Documents/crackdown-steamdeck-550/`; its `launch.sh` can be added as a non-Steam game. It uses its own
+`user_data/` directory and a read-only game-data mount. The user's initial report was positive (“not bad”), with longer
+testing still in progress. This test setup is not an AppImage or a general supported install procedure; see
+[`linux-performance-investigation.md`](linux-performance-investigation.md) for its exact artifact hashes and handoff.
+
+For the standard AppImage install flow:
 
 1. In **Desktop Mode**, do steps 1 to 5 above. Copy your disc image to the Deck first (USB stick, SD card or network).
 2. In Steam: **Games** > **Add a Non-Steam Game to My Library**, and pick the AppImage.
@@ -96,6 +106,10 @@ A build run outside an AppImage keeps `game`, `logs` and `user_data` next to the
   window this way on Linux.
 - The window title shows the frame rate and render resolution where the window system displays titles.
 
+For the ongoing Linux performance/audio investigation and its capture procedure, see
+[`linux-performance-investigation.md`](linux-performance-investigation.md) and
+[`linux-performance-profiling.md`](linux-performance-profiling.md).
+
 ## Building the AppImage
 
 Run on Linux or WSL, from a clone with the TRG launcher submodule, after `tools/codegen.ps1` has generated
@@ -154,8 +168,21 @@ A build prints, and saves next to the runtime as `<runtime>.manifest`, what prod
 their licenses are listed in `THIRD-PARTY-LICENSES-LINUX.txt` inside the AppImage. The runtime is rebuilt only when the
 pins or the patch change.
 
-For a plain build, first generate the base guest with `tools/codegen-linux.sh`. `tools/setup-linux-sdk.sh` downloads and
-SHA-256 verifies the pinned ReXGlue Linux SDK into `tools/rexglue/linux-amd64`; `tools/build.sh` also runs this setup
-automatically if needed. Then `tools/build.sh` (`release`, `relwithdebinfo` or `debug`) builds the patched ReXGlue libraries
+For a plain build, first generate the base guest with `tools/codegen-linux.sh`. `tools/setup-linux-sdk.sh` checks out the
+pinned Himdo ReXGlue commit, applies the migrated project patch, builds it, and installs the SDK under
+`tools/rexglue/himdo/linux-amd64`; `tools/build.sh` also runs this setup automatically if needed. Then `tools/build.sh`
+(`release`, `relwithdebinfo` or `debug`) builds the patched ReXGlue libraries
 when they are missing or out of date and builds the `linux-amd64-<config>` preset into `out/build/<preset>`.
 `tools/test.sh` builds and runs the tests that need no game files.
+
+Upgrading a clone that was built with the old ReXGlue v0.10.0 baseline:
+
+- `tools/codegen-linux.sh` refuses an `out/rexglue-codegen/source` worktree left at the old commit. Move it aside
+  (`mv` it, then `git -C third_party/rexglue-sdk worktree repair <new path>`) or remove it, and the script makes a new one
+  at the Himdo commit. Himdo has libmspack as a git submodule again, so the vendored-libmspack patch is skipped there.
+- An existing `out/build/<preset>` or `out/tests-linux` folder keeps the old SDK path or compiler in its CMake cache.
+  If configure says the compiler changed, or the tests still use `tools/rexglue/linux-amd64`, delete that folder's
+  `CMakeCache.txt` and `CMakeFiles/` (or use a fresh folder). When CMake sees a compiler change it resets its cache and drops
+  the preset's other settings, so the next error (such as "Set CMAKE_BUILD_TYPE") is misleading.
+- `tools/setup-linux-sdk.sh` writes `himdo-sdk.txt` into the SDK and does nothing while it matches, so `tools/build.sh`
+  does not reinstall the plain runtime over the patched one on every build.

@@ -9,12 +9,15 @@ project(crackdown VERSION 0.6.2 LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Where tools/codegen.ps1 and tools/package-linux.sh unpack the pinned SDK.
+# Where tools/codegen.ps1 and tools/package-linux.sh build the pinned SDK. An override is useful for
+# isolated SDK integration builds; ordinary builds continue to use the pinned SDK by default.
 if(WIN32)
-    set(CRACKDOWN_SDK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tools/rexglue/win-amd64")
+    set(_CRACKDOWN_DEFAULT_SDK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tools/rexglue/himdo/win-amd64")
 else()
-    set(CRACKDOWN_SDK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tools/rexglue/linux-amd64")
+    set(_CRACKDOWN_DEFAULT_SDK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tools/rexglue/himdo/linux-amd64")
 endif()
+set(CRACKDOWN_SDK_DIR "${_CRACKDOWN_DEFAULT_SDK_DIR}" CACHE PATH "ReXGlue SDK used by this build")
+option(CRACKDOWN_SKIP_REXGLUE_CHECK "Skip the pinned-runtime verifier for an isolated SDK candidate" OFF)
 list(APPEND CMAKE_PREFIX_PATH "${CRACKDOWN_SDK_DIR}")
 
 get_property(_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
@@ -340,14 +343,27 @@ else()
         --check "${CRACKDOWN_SDK_DIR}" --config $<CONFIG>)
     set(CRACKDOWN_REXGLUE_STAGED --staged)
 endif()
-add_custom_target(crackdown_rexglue_check COMMAND ${CRACKDOWN_REXGLUE_CHECK} VERBATIM)
+if(CRACKDOWN_SKIP_REXGLUE_CHECK)
+    message(WARNING "CRACKDOWN_SKIP_REXGLUE_CHECK is enabled; this build is an unverified SDK candidate")
+    add_custom_target(crackdown_rexglue_check)
+else()
+    add_custom_target(crackdown_rexglue_check COMMAND ${CRACKDOWN_REXGLUE_CHECK} VERBATIM)
+endif()
 add_dependencies(crackdown crackdown_rexglue_check)
-add_custom_target(crackdown_rexglue_staging ALL
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:rex::runtime>" "$<TARGET_FILE:rex::gpu-xenos>"
-        "$<TARGET_FILE_DIR:crackdown>"
-    COMMAND ${CRACKDOWN_REXGLUE_CHECK} ${CRACKDOWN_REXGLUE_STAGED} "$<TARGET_FILE_DIR:crackdown>"
-    VERBATIM
-)
+if(CRACKDOWN_SKIP_REXGLUE_CHECK)
+    add_custom_target(crackdown_rexglue_staging ALL
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:rex::runtime>" "$<TARGET_FILE:rex::gpu-xenos>"
+            "$<TARGET_FILE_DIR:crackdown>"
+        VERBATIM
+    )
+else()
+    add_custom_target(crackdown_rexglue_staging ALL
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:rex::runtime>" "$<TARGET_FILE:rex::gpu-xenos>"
+            "$<TARGET_FILE_DIR:crackdown>"
+        COMMAND ${CRACKDOWN_REXGLUE_CHECK} ${CRACKDOWN_REXGLUE_STAGED} "$<TARGET_FILE_DIR:crackdown>"
+        VERBATIM
+    )
+endif()
 add_dependencies(crackdown_rexglue_staging crackdown)
 
 add_custom_command(TARGET crackdown POST_BUILD

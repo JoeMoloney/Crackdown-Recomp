@@ -35,6 +35,15 @@ function Get-PlatformPatches([string]$PatchDir, [string]$Platform) {
     if ($unexpected.Count) {
         throw "patches\rexglue-sdk may hold only baseline.env and *.patch files: $(($unexpected | ForEach-Object { $_.Name }) -join ', ')"
     }
+    $baselinePath = Join-Path $PatchDir 'baseline.env'
+    $baseline = if (Test-Path -LiteralPath $baselinePath) { Read-KeyValueFile $baselinePath } else { @{} }
+    if ($baseline['SDK_COMMIT'] -eq 'c04750fe2a0add5fef8d98eb4aba06a7683a2612') {
+        $migrationPatch = Join-Path $PatchDir '1105-himdo-port.patch'
+        if (-not (Test-Path -LiteralPath $migrationPatch -PathType Leaf)) {
+            throw "Missing consolidated Himdo migration patch: $migrationPatch"
+        }
+        return @([pscustomobject]@{ Name = '1105-himdo-port.patch'; Path = $migrationPatch })
+    }
     $selected = @{}
     $numbers = @{}
     foreach ($file in @($entries | Where-Object { $_.Extension -eq '.patch' })) {

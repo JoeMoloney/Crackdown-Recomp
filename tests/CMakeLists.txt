@@ -11,7 +11,7 @@ if(WIN32)
 else()
     set(_crackdown_sdk_platform linux-amd64)
 endif()
-set(CRACKDOWN_SDK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../tools/rexglue/${_crackdown_sdk_platform}" CACHE PATH "Unpacked ReXGlue SDK")
+set(CRACKDOWN_SDK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../tools/rexglue/himdo/${_crackdown_sdk_platform}" CACHE PATH "Built Himdo ReXGlue SDK")
 set(CRACKDOWN_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../src")
 
 enable_testing()

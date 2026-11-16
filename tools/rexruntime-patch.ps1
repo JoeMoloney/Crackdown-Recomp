@@ -22,7 +22,7 @@ function Get-RexglueConfigSuffix([string]$Config) {
 }
 
 function Get-RexglueLayout([string]$Root, [string]$Config = 'RelWithDebInfo') {
-    $sdkDir = Join-Path $Root 'tools\rexglue\win-amd64'
+    $sdkDir = Join-Path $Root 'tools\rexglue\himdo\win-amd64'
     $patchDir = Join-Path $Root 'patches\rexglue-sdk'
     $baseline = Read-KeyValueFile (Join-Path $patchDir 'baseline.env')
     $stampName = if ($Config -eq 'RelWithDebInfo') { $RexglueRuntimeStampName } else { "rexruntime-patch-$Config.txt" }

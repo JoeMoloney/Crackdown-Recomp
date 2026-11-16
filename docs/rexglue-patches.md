@@ -1,13 +1,14 @@
 # ReXGlue patches
 
-Baseline: ReXGlue v0.10.0 (`patches/rexglue-sdk/baseline.env`). Only `rexruntime` and `rexgpu-xenos` are rebuilt, and the
-result is installed over the stock files in `tools/rexglue`. The game compiles against the stock SDK headers, so a patch
-must not move virtual functions or data members of classes the generated game code uses.
+Baseline: Himdo's ReXGlue commit `c04750fe2a0add5fef8d98eb4aba06a7683a2612` (`patches/rexglue-sdk/baseline.env`). Its
+migrated project changes are consolidated in `1105-himdo-port.patch`; `tools/setup-linux-sdk.sh` and
+`tools/setup-windows-sdk.ps1` build and install the matching SDK under `tools/rexglue/himdo`. The v0.10.0 release hashes
+remain in `baseline.env` only for validating/restoring the known-good fallback artifacts. The game compiles against the SDK
+headers, so a patch must not move virtual functions or data members of classes the generated game code uses.
 
-`NNNN-name.patch` applies on both platforms, `NNNN-name.windows.patch` only on Windows and `NNNN-name.linux.patch` only on
-Linux. Numbers are unique and patches apply in name order; gaps are fine. 56 patches are common, 26 are Windows only and
-13 are Linux only, so 82 apply on Windows and 69 apply on Linux. Patches 0005, 0052 and 0095 change the code generator and
-are the reason `tools\codegen.ps1` builds its own `rexglue.exe`; the rest change the runtime and the GPU plugin.
+The numbered pre-migration patches below document the individual project changes and are retained for history and tests.
+The new baseline build applies the consolidated port patch as one unit to keep the migration reproducible against Himdo.
+Changes to the code generator are included in that patch; both platform codegen paths now build from the patched SDK source.
 
 | # | Platform | Purpose |
 |---|----------|---------|

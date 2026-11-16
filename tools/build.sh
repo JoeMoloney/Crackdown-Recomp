@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The normal Linux build. Makes sure tools/rexglue/linux-amd64 holds the pinned ReXGlue SDK and that its runtime and GPU plugin
+# The normal Linux build. Makes sure tools/rexglue/himdo/linux-amd64 holds the pinned Himdo ReXGlue SDK and that its runtime and GPU plugin
 # branch's patches, building them with tools/build-patched-rexruntime.sh when it does not (git and network access the
 # first time), then configures and builds the matching preset into out/build/<preset>. The Debug libraries stay stock.
 #
@@ -11,7 +11,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-SDK="$ROOT/tools/rexglue/linux-amd64"
+SDK="$ROOT/tools/rexglue/himdo/linux-amd64"
 PATCHED="$ROOT/tools/build-patched-rexruntime.sh"
 
 fail() { echo "ERROR: $*" >&2; exit 1; }
@@ -29,7 +29,7 @@ bash "$ROOT/tools/check-guest-code.sh" "$ROOT" || fail "generated/default is not
 
 if [ "$CONFIG" != Debug ] && ! bash "$PATCHED" --check "$SDK" >/dev/null 2>&1; then
   echo "== Building the patched ReXGlue runtime and GPU plugin"
-  bash "$PATCHED" "$SDK"
+  bash "$PATCHED" "$SDK" "$ROOT/tools/rexglue/himdo/rexglue-sdk-src"
 fi
 
 cd "$ROOT"

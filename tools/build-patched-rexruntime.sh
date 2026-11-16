@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Builds ReXGlue's Release and RelWithDebInfo librexruntime.so and librexgpu-xenos.so (the Vulkan GPU plugin) from the
-# pinned v0.10.0 source with this project's patches and installs them into an extracted linux-amd64 SDK folder.
+# pinned Himdo source with this project's migrated patch and installs it into tools/rexglue/himdo/linux-amd64.
 # tools/build.sh and tools/package-linux.sh run this themselves, and the CMake build checks the SDK with --check; see
 # docs/build-workflow.md.
 #
@@ -26,8 +26,8 @@ PATCH_PLATFORM=linux
 STAMP_NAME=rexruntime-patch.txt
 LIBS=(lib/librexruntime.so lib/librexruntimerd.so lib/librexgpu-xenos.so lib/librexgpu-xenosrd.so)
 # How the patched files are built; part of the fingerprint, so changing them invalidates the installed files.
-CC=clang-20
-CXX=clang++-20
+CC="${CC:-$(command -v clang-20 || command -v clang)}"
+CXX="${CXX:-$(command -v clang++-20 || command -v clang++)}"
 BUILD_FLAGS=-march=x86-64-v2
 LINK_RPATH='$ORIGIN:$ORIGIN/../lib'
 BUILD_TARGETS=(rexruntime rexgpu-xenos)
@@ -53,6 +53,11 @@ join_by() { local IFS="$1"; shift; echo "$*"; }
 PATCHES=()
 collect_patches() {
   local file name number
+  if [ "$SDK_COMMIT" = c04750fe2a0add5fef8d98eb4aba06a7683a2612 ]; then
+    PATCHES=(1105-himdo-port.patch)
+    [ -f "$PATCH_DIR/${PATCHES[0]}" ] || fail "missing consolidated Himdo migration patch"
+    return
+  fi
   local -A numbers=()
   local -a names=()
   shopt -s nullglob
@@ -260,7 +265,7 @@ fi
 SDK="${1:-}"
 [ -n "$SDK" ] && [ -d "$SDK/lib/cmake/rexglue" ] ||
   fail "usage: $0 SDK_DIR [WORK_DIR] (SDK_DIR is the extracted linux-amd64 SDK)"
-SRC="${2:-$ROOT/out/rexglue-sdk-src}"
+SRC="${2:-$ROOT/out/rexglue-himdo-sdk-src}"
 
 for tool in git "$CC" "$CXX" cmake ninja sha256sum readelf nm; do
   command -v "$tool" >/dev/null || fail "$tool not found"
@@ -269,10 +274,13 @@ done
 if [ ! -d "$SRC/.git" ]; then
   echo "== Fetching ReXGlue $SDK_TAG from $SDK_REPO (network) into $SRC"
   mkdir -p "$(dirname "$SRC")"
-  git clone --branch "$SDK_TAG" --depth 1 --recurse-submodules --shallow-submodules --jobs 8 "$SDK_REPO" "$SRC"
+  git clone --no-checkout "$SDK_REPO" "$SRC"
 fi
+git -C "$SRC" fetch --depth 1 origin "$SDK_COMMIT"
+git -C "$SRC" checkout --detach "$SDK_COMMIT"
 COMMIT="$(git -C "$SRC" rev-parse HEAD)"
 [ "$COMMIT" = "$SDK_COMMIT" ] || fail "$SRC is at $COMMIT; expected $SDK_TAG $SDK_COMMIT (delete the folder to fetch it again)"
+git -C "$SRC" submodule update --init --recursive --jobs 8
 
 echo "== Patch ($(patch_names))"
 # Another branch may have left other patches in the tree, in any tracked file.
@@ -287,6 +295,12 @@ echo "== Build ${BUILD_TARGETS[*]} (${BUILD_CONFIGS[*]})"
 # -ffile-prefix-map keeps the build folder out of the libraries' log strings; the RUNPATH is the stock libraries'
 # instead of the build folder and the empty entries CMake would add.
 FLAGS="$BUILD_FLAGS -ffile-prefix-map=$SRC=."
+CACHE="$SRC/out/build/linux-amd64/CMakeCache.txt"
+if [ -f "$CACHE" ] && [ "$(sed -n 's/^CMAKE_CXX_COMPILER:[A-Z]*=//p' "$CACHE")" != "$CXX" ]; then
+  # CMake would otherwise wipe the cache itself on the compiler change and silently drop the flags below.
+  echo "== Compiler changed to $CXX; clearing the CMake cache"
+  rm -rf "$CACHE" "$SRC/out/build/linux-amd64/CMakeFiles"
+fi
 (
   cd "$SRC"
   cmake --preset linux-amd64 "-DCMAKE_C_COMPILER=$CC" "-DCMAKE_CXX_COMPILER=$CXX" \

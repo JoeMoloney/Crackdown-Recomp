@@ -99,13 +99,13 @@ for d in assets cmake config src tests generated packaging patches third_party/t
 done
 
 echo "== ReXGlue SDK $SDK_VERSION (linux-amd64)"
-SDK="$WORK/tools/rexglue/linux-amd64"
+SDK="$WORK/tools/rexglue/himdo/linux-amd64"
 bash "$ROOT/tools/setup-linux-sdk.sh" "$(dirname "$SDK")"
 
 echo "== Patched ReXGlue runtime and GPU plugin"
 PATCHED="$ROOT/tools/build-patched-rexruntime.sh"
 if ! bash "$PATCHED" --check "$SDK" >/dev/null 2>&1; then
-  bash "$PATCHED" "$SDK" "$WORK/rexglue-sdk-src"
+  bash "$PATCHED" "$SDK" "$WORK/tools/rexglue/himdo/rexglue-sdk-src"
 fi
 bash "$PATCHED" --check "$SDK"
 

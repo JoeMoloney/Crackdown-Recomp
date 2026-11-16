@@ -1,7 +1,7 @@
 <#
 .SYNOPSIS
   Builds ReXGlue's rexruntime and Xenos GPU plugin from the pinned SDK source with the patches in
-  patches\rexglue-sdk, and installs the requested configuration into tools\rexglue\win-amd64.
+  patches\rexglue-sdk, and installs the requested configuration into tools\rexglue\himdo\win-amd64.
 
 .DESCRIPTION
   tools\build.ps1 runs this by itself when the installed files are not current. Run it by hand only to diagnose
@@ -16,7 +16,7 @@
   .\tools\build-patched-rexruntime.ps1 -Codegen  # build the codegen tool from the codegen patches (tools\codegen.ps1 runs this)
 #>
 param(
-    [string]$WorkDir,  # ReXGlue source and build folder; default: out\rexglue-sdk-src
+    [string]$WorkDir,  # ReXGlue source and build folder; default: out\rexglue-himdo-sdk-src
     [switch]$Check,
     [string]$Staged,  # with -Check: a build folder whose DLLs must be the installed ones
     [switch]$Restore,
@@ -56,12 +56,15 @@ function Initialize-RexglueSource($Layout, [string]$Src, $Patches) {
     if (-not (Test-Path -LiteralPath (Join-Path $Src '.git'))) {
         Write-Host "Fetching ReXGlue $($baseline['SDK_TAG']) from $($baseline['SDK_REPO']) (network)..."
         New-Item -ItemType Directory -Force (Split-Path $Src) | Out-Null
-        Invoke-Native 'git clone' { git clone --branch $baseline['SDK_TAG'] --depth 1 --recurse-submodules --shallow-submodules --jobs 8 $baseline['SDK_REPO'] $Src }
+        Invoke-Native 'git clone' { git clone --no-checkout $baseline['SDK_REPO'] $Src }
     }
+    Invoke-Native 'git fetch' { git -C $Src fetch --depth 1 origin $baseline['SDK_COMMIT'] }
+    Invoke-Native 'git checkout' { git -C $Src checkout --detach $baseline['SDK_COMMIT'] }
     $commit = "$(git -C $Src rev-parse HEAD)".Trim()
     if ($commit -ne $baseline['SDK_COMMIT']) {
         throw "$Src is at $commit; expected $($baseline['SDK_TAG']) $($baseline['SDK_COMMIT']) (delete the folder to fetch it again)"
     }
+    Invoke-Native 'ReXGlue submodule update' { git -C $Src submodule update --init --recursive --jobs 8 }
     # The build tree lives in out\ and is kept; everything else untracked or modified is reset to the pinned commit.
     Invoke-Native 'git checkout' { git -C $Src checkout -- . }
     Invoke-Native 'git clean' { git -C $Src clean -fdq -e out }
@@ -171,7 +174,7 @@ if ($Check) {
 }
 
 $patches = @(Get-RexglueRuntimePatches $Layout.PatchDir)
-$src = if (-not $WorkDir) { Join-Path $Root 'out\rexglue-sdk-src' } elseif ([IO.Path]::IsPathRooted($WorkDir)) { $WorkDir } else { Join-Path $Root $WorkDir }
+$src = if (-not $WorkDir) { Join-Path $Root 'out\rexglue-himdo-sdk-src' } elseif ([IO.Path]::IsPathRooted($WorkDir)) { $WorkDir } else { Join-Path $Root $WorkDir }
 
 if ($Codegen) {
     $identity = Get-CodegenToolIdentity $Root

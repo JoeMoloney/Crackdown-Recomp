@@ -32,6 +32,9 @@ for patch in $(ls "$PATCH_DIR"/*.patch | LC_ALL=C sort); do
     codegen_patches+=("$patch")
   fi
 done
+if [ "$(sed -n 's/^SDK_COMMIT=//p' "$PATCH_DIR/baseline.env" | tr -d '\r')" = c04750fe2a0add5fef8d98eb4aba06a7683a2612 ]; then
+  codegen_patches=("$PATCH_DIR/1105-himdo-port.patch")
+fi
 tool=stock
 if [ "${#codegen_patches[@]}" -gt 0 ]; then
   lines=""

@@ -19,7 +19,7 @@ $CodegenBuilds = @{
 }
 
 function Get-InstalledRexglueVersion([string]$Root) {
-    $file = Join-Path $Root 'tools\rexglue\win-amd64\lib\cmake\rexglue\rexglueConfigVersion.cmake'
+    $file = Join-Path $Root 'tools\rexglue\himdo\win-amd64\lib\cmake\rexglue\rexglueConfigVersion.cmake'
     if (-not (Test-Path $file)) { return '' }
     [regex]::Match([IO.File]::ReadAllText($file), 'set\(PACKAGE_VERSION "([^"]+)"\)').Groups[1].Value
 }

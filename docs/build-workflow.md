@@ -15,7 +15,7 @@ When `build.ps1` prints `Guest code: stale`, regenerate the guest code once, the
   `generated\codegen-inputs.stamp`, and stops when they differ. A patch that touches `src/codegen/` changes the
   codegen tool too: `codegen.ps1` then builds `rexglue.exe` from the patches into `out\rexglue-codegen` and uses it,
   and the stamp records that tool, so adding or editing such a patch makes the guest code stale.
-- **ReXGlue runtime and GPU plugin** (`tools\rexglue\win-amd64`) are checked by content hash on every build. The
+- **ReXGlue runtime and GPU plugin** (`tools\rexglue\himdo\win-amd64`) are checked by content hash on every build. The
   fingerprint covers the baseline in `patches\rexglue-sdk\baseline.env`, the build settings in
   `tools\rexruntime-patch.ps1`, the toolchain and every `*.patch` file. When it does not match, `build.ps1` rebuilds
   the runtime itself, or restores the stock files when there are no patches. Adding, editing, renaming or removing a
@@ -78,7 +78,7 @@ the includes and the codegen patches.
     tools/build.sh [release|relwithdebinfo|debug]   # build into out/build/linux-amd64-<config>
     tools/test.sh                                    # tests that need no game files
     tools/package-linux.sh [--clean] [--out-dir DIR] # Release build and AppImage in dist/
-    tools/build-patched-rexruntime.sh --check tools/rexglue/linux-amd64 --config Release   # report the installed runtime
+    tools/build-patched-rexruntime.sh --check tools/rexglue/himdo/linux-amd64 --config Release   # report the installed runtime
 
 `tools/build-patched-rexruntime.sh` is the Linux counterpart of `tools\build-patched-rexruntime.ps1`: the same pinned
 source and patches, the Linux patch set, and a stamp checked before every build and after staging. The CMake build runs

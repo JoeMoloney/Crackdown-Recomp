@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  Downloads the pinned ReXGlue SDK, checks game\assets\Default.xex and
+  Builds the pinned Himdo ReXGlue SDK when needed, checks game\assets\Default.xex and
   generates the recompiled C++ sources into generated\default. This is the only entry point that regenerates them.
   When a patch in patches\rexglue-sdk changes the codegen, it generates with a codegen tool built from the patches.
 
@@ -21,29 +21,20 @@ $spec = $CodegenBuilds[$Build]
 
 $baseline = Read-KeyValueFile (Join-Path $root 'patches\rexglue-sdk\baseline.env')
 $sdkVersion = $baseline['SDK_VERSION']
-$sdkDir = Join-Path $root 'tools\rexglue'
-$rexglue = Join-Path $sdkDir 'win-amd64\bin\rexglue.exe'
+$sdkDir = Join-Path $root 'tools\rexglue\himdo\win-amd64'
+$rexglue = Join-Path $sdkDir 'bin\rexglue.exe'
 $xex = Join-Path $root $CrackdownXexPath
 $log = Join-Path $root $spec.Log
 $stamp = Join-Path $root $spec.Stamp
 if (Test-Path $stamp) { Remove-Item -LiteralPath $stamp }
 
-if (-not (Test-Path $rexglue)) {
-    $zip = Join-Path $sdkDir "rexglue-sdk-$sdkVersion-win-amd64.zip"
-    if (-not (Test-Path $zip)) {
-        New-Item -ItemType Directory -Force $sdkDir | Out-Null
-        $url = "https://github.com/rexglue/rexglue-sdk/releases/download/v$sdkVersion/rexglue-sdk-$sdkVersion-win-amd64.zip"
-        Write-Host "Downloading ReXGlue SDK $sdkVersion..."
-        Invoke-WebRequest -Uri $url -OutFile $zip
-    }
-    if ((Get-FileSha256 $zip) -ne $baseline['SDK_ZIP_SHA256']) { throw "$zip is not the official ReXGlue $sdkVersion release" }
-    Expand-Archive -Path $zip -DestinationPath $sdkDir -Force
+if (-not (Test-Path (Join-Path $sdkDir 'lib\cmake\rexglue\rexglueConfig.cmake'))) {
+    Write-Host "Building pinned Himdo ReXGlue $($baseline['SDK_COMMIT'])..."
+    & (Get-Process -Id $PID).Path -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'setup-windows-sdk.ps1')
+    if ($LASTEXITCODE) { throw "Building the Himdo ReXGlue SDK failed ($LASTEXITCODE)" }
 }
 $installed = "$(& $rexglue --version)".Trim()
-if ($installed -ne $sdkVersion) { throw "tools\rexglue has ReXGlue $installed; expected $sdkVersion (delete tools\rexglue to re-download)" }
-if ((Get-FileSha256 $rexglue) -ne $baseline['SHA256_bin/rexglue.exe']) {
-    throw "$rexglue is not the stock ReXGlue $sdkVersion codegen (delete tools\rexglue to re-download)"
-}
+if ($installed -notlike "$sdkVersion*") { throw "Himdo ReXGlue reports version '$installed'; expected $sdkVersion" }
 $codegenTool = Get-CodegenToolIdentity $root
 if ($codegenTool -ne 'stock') {
     $rexglue = Get-PatchedCodegenPath $root $codegenTool

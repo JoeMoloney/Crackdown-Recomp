@@ -5,7 +5,7 @@
 #   tools/test.sh user_data        only tests whose name matches
 #
 # CRACKDOWN_TEST_BUILD sets the build folder (default out/tests-linux); CRACKDOWN_SDK_DIR the unpacked linux-amd64 SDK
-# (default tools/rexglue/linux-amd64).
+# (default tools/rexglue/himdo/linux-amd64).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"

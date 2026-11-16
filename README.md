@@ -39,7 +39,7 @@ Then reload and verify:
 `clang-20 --version`
 `clang++-20 --version`
 `ld.lld-20 --version`
-[Bootstraps rexglue/linux-amd64 automatically, then builds the game. Use: .tools/build.sh release](tools/build.sh)
+[Builds the pinned Himdo ReXGlue SDK into tools/rexglue/himdo/linux-amd64 when needed, then builds the game. Use: ./tools/build.sh release](tools/build.sh)
 If you still get clang-20 not found when trying to run build.sh release
 Run it with: `PATH="/usr/lib/llvm20/bin:$HOME/.local/bin:$PATH" ./tools/build.sh release`
 You can also add this line to ~/.zshrc for future runs: `export PATH="/usr/lib/llvm20/bin:$HOME/.local/bin:$PATH"`
@@ -254,8 +254,8 @@ In an existing clone, run `git submodule update --init --recursive`.
 
 1. Install Visual Studio with the C++ and LLVM/Clang components.
 2. Extract the files of your disc into `game\assets`, so that `game\assets\Default.xex` exists.
-3. `.\tools\codegen.ps1` downloads the pinned ReXGlue SDK 0.10.0, checks `Default.xex` and generates the C++ into `generated\`.
-4. `.\tools\build.ps1` builds `build\crackdown.exe`. It first checks that ReXGlue's runtime and Xenos GPU plugin in `tools\rexglue` were built from this project's patches (`patches\rexglue-sdk`) and rebuilds them from the v0.10.0 source when they were not (network access the first time). It does not regenerate the C++; when that is stale it says so.
+3. `.\tools\codegen.ps1` builds the pinned Himdo ReXGlue SDK (`tools\setup-windows-sdk.ps1`) when needed, checks `Default.xex` and generates the C++ into `generated\`.
+4. `.\tools\build.ps1` builds `build\crackdown.exe`. It first checks that ReXGlue's runtime and Xenos GPU plugin in `tools\rexglue` were built from this project's patches (`patches\rexglue-sdk`) and rebuilds them from the pinned Himdo source when they were not (network access the first time). It does not regenerate the C++; when that is stale it says so.
 5. `.\tools\package-release.ps1` makes the release ZIP in `dist\`. It builds the same way, builds the update helper `trg-updater.exe` with MSYS2 CLANG64 (`pacman -S mingw-w64-clang-x86_64-toolchain`), refuses to package a runtime that does not match the patches, and publishes nothing.
 6. `.\tools\test.ps1` builds and runs the tests that need no game files.
 
