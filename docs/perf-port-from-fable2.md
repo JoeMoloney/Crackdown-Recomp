@@ -1,4 +1,9 @@
-# Port Fable II's Linux perf fixes to Crackdown — multi-session plan (START HERE)
+# Port Fable II's Linux perf fixes to Crackdown — multi-session plan
+
+> **Finished 2026-11-16.** Kept: C (`vulkan_async_submit`) and E (`gpu_skip_unchanged_constant_writes`), on by default
+> in `config/crackdown.toml`. Heavy scene 34.8 → 36.2 FPS median, slow frames (p10) 31.4 → 35.1. Skipped A, B, D
+> (not the bottleneck here). GPU Commands is still the limiter (~0.92 cores); a possible future lead is its wait on
+> GPU Submit at each swap (`out/perf-capture/20261116-103713/`).
 
 Started 2026-11-15. Source of the fixes: Fable-2-Recomp `plans/done/PERF_SESSIONS.md` (Fable went
 16 → solid 30 FPS on the same desktop: i9-10900K, RTX 3090, CachyOS). Its SDK changes are commits on
@@ -47,7 +52,7 @@ Measure with the in-game guest FPS where available, plus MangoHud median/p10 (se
 | 4 | + E | 1 | ✅ 2026-11-16: 36.2 / 35.1, stable. Keep both |
 | 5 | spare / follow-up on whatever the C+E profile shows | 1 | ⏳ |
 | 6 | (dropped: D not needed) | — | — |
-| 7 | All kept fixes on, normal longer play: hitches, audio, visuals. Seed winning cvars as defaults. | 1 | 🔶 2026-11-16: both set in `config/crackdown.toml` (unit 5 skipped); play session pending. Also fixed: editing only the config never reached the staged build (now its own CMake target) |
+| 7 | All kept fixes on, normal longer play: hitches, audio, visuals. Seed winning cvars as defaults. | 1 | ✅ 2026-11-16: both set in `config/crackdown.toml` (unit 5 skipped); longer play session looked normal. Also fixed: editing only the config never reached the staged build (now its own CMake target) |
 | — | Spare boots for crashes / unclear results | 1–2 | |
 
 ## Unit 0 notes (2026-11-15)
@@ -178,12 +183,3 @@ unclear, a flags-off boot re-measures the baseline.
 (p10 31.4 → 35.1, p90 frame time 31.8 → 28.5 ms), i.e. smoother. GPU Commands is still the limiter but no longer
 100% busy: it now sleeps ~7%, partly waiting on GPU Submit (the swap waits for the frame to be submitted; seen in
 `sched-wakeups.txt`). Make both defaults in unit 7.
-
-## Next session prompt
-
-```
-Crackdown perf port: read docs/perf-port-from-fable2.md (status table, unit 7). vulkan_async_submit and
-gpu_skip_unchanged_constant_writes are now on in config/crackdown.toml. I've done a longer normal play session on the
-current build; here's what I saw: <notes>. Record it, tick unit 7, and if anything regressed, find out which of the
-two flags causes it (launch with --<flag>=false). Don't commit without asking. Explain simply (I'm a Java dev).
-```
